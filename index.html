@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Предложение: чат-бот для АльфаТренинг</title>
+<style>
+:root{--bg:#f3f4f6;--card:#fff;--ink:#1f2933;--mute:#6b7280;--line:#e5e7eb}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:22px;margin:0 0 4px}
+.sub{color:var(--mute);margin:0 0 14px}
+.demo{background:#fff8e1;border:1px solid #f3dd9a;border-radius:10px;padding:8px 12px;font-size:13px;margin-bottom:14px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+.seg button{border:0;background:#fff;padding:7px 12px;font:inherit;cursor:pointer;color:var(--mute)}
+.seg button.on{background:var(--ink);color:#fff}
+.reset{border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 12px;font:inherit;cursor:pointer}
+.lbl{font-size:12px;color:var(--mute);margin-right:-4px}
+.grid{display:grid;grid-template-columns:380px 1fr;gap:18px;align-items:start}
+@media(max-width:820px){.grid{grid-template-columns:1fr}}
+
+/* ---- окно мессенджера ---- */
+#phone{
+  --acc:#3390ec;--out:#eeffde;--outtime:#5ca85b;--btn:rgba(37,64,74,.42);--btnh:rgba(37,64,74,.6);
+  --ava1:#6cb7f2;--ava2:#3a7fd0;
+  --wp:linear-gradient(165deg,#d6e6bd 0%,#a9d3b4 48%,#7db7a6 100%);
+  background:#fff;border:1px solid #d9dde2;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;height:680px;
+  box-shadow:0 6px 24px rgba(20,30,50,.12);color:#000
+}
+#phone[data-ch=max]{
+  --acc:#6c4cf0;--out:#e6e0ff;--outtime:#8a78d8;--btn:rgba(80,60,150,.45);--btnh:rgba(80,60,150,.65);
+  --ava1:#9b86ff;--ava2:#5a3fe0;
+  --wp:linear-gradient(165deg,#f1edff 0%,#e1d9ff 100%)
+}
+.head{display:flex;align-items:center;gap:8px;padding:7px 10px;background:#fff;border-bottom:1px solid #e7e8ea}
+.head svg{width:24px;height:24px;fill:#707579;flex:none}
+.ava{width:40px;height:40px;border-radius:50%;background:linear-gradient(var(--ava1),var(--ava2));color:#fff;display:grid;place-items:center;font-weight:600;font-size:17px;flex:none}
+.who{flex:1;min-width:0}
+.who b{display:block;font-size:16px;font-weight:600;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.who small{display:block;font-size:13px;color:#8a9096;line-height:1.2}
+.who small.typing{color:var(--acc)}
+.who small.typing::after{content:"";display:inline-block;width:14px;text-align:left;animation:dots 1.2s steps(4,end) infinite}
+@keyframes dots{0%{content:""}25%{content:"."}50%{content:".."}75%{content:"..."}}
+#chat{flex:1;overflow-y:auto;padding:10px;background:var(--wp);position:relative;display:flex;flex-direction:column;gap:4px}
+#chat::before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.22) 1.4px,transparent 1.5px);background-size:22px 22px;pointer-events:none}
+#chat>*{position:relative}
+.date{align-self:center;background:rgba(0,0,0,.3);color:#fff;font-size:12px;font-weight:500;padding:2px 10px;border-radius:12px;margin:2px 0 6px}
+.msg{max-width:86%;padding:6px 9px 5px;border-radius:12px;white-space:pre-wrap;word-wrap:break-word;box-shadow:0 1px 1px rgba(0,0,0,.13);animation:in .18s ease;font-size:15px;line-height:1.35}
+.msg.bot{background:#fff;align-self:flex-start;border-bottom-left-radius:4px}
+.msg.user{background:var(--out);align-self:flex-end;border-bottom-right-radius:4px}
+.time{float:right;margin:7px 0 -3px 10px;font-size:11px;color:#9aa3ab;user-select:none}
+.msg.user .time{color:var(--outtime)}
+@keyframes in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.kb{align-self:flex-start;width:min(88%,330px);display:flex;flex-wrap:wrap;gap:3px;animation:in .18s ease}
+.kb button{flex:1 1 calc(50% - 2px);border:0;background:var(--btn);color:#fff;border-radius:8px;padding:9px 8px;font:inherit;font-size:14px;font-weight:500;cursor:pointer;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.kb button.full{flex-basis:100%}
+.kb button:hover{background:var(--btnh)}
+#startbar{background:#fff;border-top:1px solid #e7e8ea;padding:6px}
+#startBtn{width:100%;border:0;background:#fff;color:var(--acc);font:inherit;font-weight:600;letter-spacing:.04em;padding:12px;cursor:pointer;border-radius:8px}
+#startBtn:hover{background:#f1f4f7}
+#form{display:flex;align-items:center;gap:6px;padding:6px 8px;background:#fff;border-top:1px solid #e7e8ea}
+#form[hidden],#startbar[hidden]{display:none}
+#form svg{width:24px;height:24px;fill:#8a9096;flex:none}
+#form .clip{transform:rotate(0deg)}
+#inp{flex:1;border:0;outline:0;padding:10px 6px;font:inherit;font-size:15px;background:transparent;min-width:0}
+#inp::placeholder{color:#a0a6ac}
+#send{border:0;background:transparent;padding:0;cursor:pointer;display:grid;place-items:center}
+#send svg{fill:var(--acc)}
+
+/* ---- правая колонка ---- */
+.side{display:flex;flex-direction:column;gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.card h2{font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--mute);margin:0 0 8px}
+#explain b{display:block;font-size:16px;margin-bottom:4px}
+#lead .empty{color:var(--mute)}
+.lead{border-left:4px solid #1f9d55;padding-left:12px;animation:in .3s ease}
+.lead .t{font-weight:700;margin-bottom:6px}
+.lead dl{margin:0;display:grid;grid-template-columns:130px 1fr;gap:3px 10px}
+.lead dt{color:var(--mute)}.lead dd{margin:0}
+.tag{display:inline-block;background:#eef2ff;color:#3b4cca;border-radius:6px;padding:1px 7px;font-size:12px;margin-top:8px}
+.tag.night{background:#fff1e6;color:#b45309}
+.steps{display:flex;flex-wrap:wrap;gap:6px}
+.steps span{background:#f3f4f6;border-radius:999px;padding:3px 10px;font-size:12px;color:var(--mute)}
+.steps span.on{background:var(--ink);color:#fff}
+
+html,body{max-width:100%;overflow-x:hidden}
+body{background:#fff}
+.hero{background:linear-gradient(135deg,#14213d 0%,#2b5fa8 100%);color:#fff;padding:56px 0 50px}
+.hero .wrap,.pg .wrap{padding-top:0;padding-bottom:0}
+.hero .kick{font-size:13px;letter-spacing:.08em;text-transform:uppercase;opacity:.75;margin-bottom:10px}
+.hero h1{font-size:36px;line-height:1.2;margin:0 0 14px;max-width:780px}
+.hero p{font-size:18px;max-width:720px;opacity:.93;margin:0 0 24px}
+.btn{display:inline-block;background:#fff;color:#14213d;padding:12px 22px;border-radius:10px;font:inherit;font-weight:600;text-decoration:none;cursor:pointer;border:0}
+.pg{padding:44px 0;border-bottom:1px solid #eef0f3}
+.pg.alt{background:#fafbfc}
+.pg h2{font-size:26px;margin:0 0 12px}
+.pg .intro{color:#4b5563;max-width:780px;margin:0 0 20px}
+.cols3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.cols2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+@media(max-width:820px){.cols3,.cols2{grid-template-columns:1fr}.hero h1{font-size:28px}}
+.pc{border:1px solid #e5e7eb;border-radius:14px;padding:16px 18px;background:#fff}
+.pc b{display:block;margin-bottom:4px;font-size:16px}
+.pc p{margin:0;color:#4b5563}
+.num{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#2b5fa8;color:#fff;font-weight:700;margin-bottom:8px}
+.list{margin:0;padding-left:20px}.list li{margin:6px 0}
+table.price{min-width:520px;width:100%;border-collapse:collapse;background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden}
+table.price th,table.price td{padding:10px 12px;border-bottom:1px solid #eef0f3;text-align:center;vertical-align:middle}
+table.price th:first-child,table.price td:first-child{text-align:left}
+table.price thead th{background:#14213d;color:#fff}
+table.price tr.sum td{font-weight:700;font-size:17px;background:#f4f8ff}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:12px}
+.swipe{display:none;font-size:12px;color:#9ca3af;margin:6px 0 0}
+@media(max-width:640px){.swipe{display:block}table.price th,table.price td{padding:8px 8px;font-size:13px}}
+.hint{font-size:13px;color:#6b7280;margin:-8px 0 14px}
+.note{color:#6b7280;font-size:14px;margin-top:12px}
+.cta{background:linear-gradient(135deg,#14213d,#2b5fa8);color:#fff;border-radius:16px;padding:26px 28px}
+.cta h2{margin:0 0 8px}.cta p{margin:0 0 6px;opacity:.93}
+footer{padding:24px 0;color:#9ca3af;font-size:13px;text-align:center}
+#demo .demo{margin-top:0}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <div class="kick">Коммерческое предложение · АльфаТренинг</div>
+  <h1>Чат-бот, который подбирает обучение и сам передаёт готовые заявки в CRM</h1>
+  <p>Клиент выбирает программу и оставляет заявку в Telegram или MAX в любое время. Менеджер получает в CRM готовую сделку со всеми данными, а не вопрос «а что у вас есть?».</p>
+  <a class="btn" id="toDemo" href="#demo">Попробовать бота ↓</a>
+</div></header>
+
+<section class="pg"><div class="wrap">
+  <h2>Какие задачи это решает</h2>
+  <p class="intro">По открытой информации на сайте atgprof.com вижу следующее.</p>
+  <div class="cols2">
+    <div class="pc"><b>Большой каталог</b><p>Заявлено 100+ направлений обучения. Клиенту, особенно из небольшой компании, трудно самому понять, какие курсы ему нужны по должности и отрасли.</p></div>
+    <div class="pc"><b>Стоимость обсуждается индивидуально</b><p>Каждый запрос цены уходит менеджеру. Бот заранее соберёт всё нужное: программы, число сотрудников, город, формат.</p></div>
+    <div class="pc"><b>Рабочее время 09:00–18:00</b><p>Вечерние и выходные обращения остаются без ответа до утра, и часть клиентов уходит к конкурентам.</p></div>
+    <div class="pc"><b>Повторное обучение</b><p>Многие программы нужно проходить регулярно. Автоматические напоминания возвращают клиентов без затрат на рекламу.</p></div>
+  </div>
+</div></section>
+
+<section class="pg alt"><div class="wrap">
+  <h2>Как это работает</h2>
+  <div class="cols3">
+    <div class="pc"><div class="num">1</div><b>Клиент пишет боту</b><p>В Telegram или MAX, где ему удобно. Печатать почти ничего не нужно: бот предлагает ответы кнопками.</p></div>
+    <div class="pc"><div class="num">2</div><b>Бот подбирает и уточняет</b><p>Спрашивает сферу, должности и направление, предлагает программы из каталога или передаёт вопрос специалисту, если клиент не определился.</p></div>
+    <div class="pc"><div class="num">3</div><b>Заявка в CRM</b><p>Менеджер видит готовую сделку: компания, контакт, программы, количество, формат и вопрос клиента.</p></div>
+  </div>
+</div></section>
+
+<section class="pg" id="demo"><div class="wrap">
+  <h2>Попробуйте сами</h2>
+  <p class="intro">Это работающий прототип. Нажмите «Запустить» и пройдите путь клиента. Справа видно, что получает менеджер в CRM. Переключатели сверху показывают, как бот работает в MAX и как отвечает вечером или в выходной.</p>
+  <p class="hint">Если демо не реагирует на нажатия, откройте страницу в обычном браузере. В Telegram: меню ⋯ → «Открыть в браузере».</p>
+  <noscript><p class="hint">Для демо нужен включённый JavaScript. Откройте страницу в обычном браузере.</p></noscript>
+  <div class="demo">Это демо. Названия программ и ответы на вопросы условные: в рабочем боте будут данные из каталога и FAQ «АльфаТренинг».</div>
+
+  <div class="bar">
+    <span class="lbl">Канал</span>
+    <div class="seg" id="chSeg"><button class="on" data-ch="tg">Telegram</button><button data-ch="max">MAX</button></div>
+    <span class="lbl">Когда пишет клиент</span>
+    <div class="seg" id="tmSeg"><button class="on" data-t="day">Рабочее время</button><button data-t="night">Вечер или выходной</button></div>
+    <button class="reset" id="reset">Начать сначала</button>
+  </div>
+
+  <div class="grid">
+    <div id="phone" data-ch="tg">
+      <div class="head">
+        <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+        <div class="ava">А</div>
+        <div class="who"><b>АльфаТренинг</b><small id="status">бот</small></div>
+        <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+      </div>
+      <div id="chat"></div>
+      <div id="startbar"><button id="startBtn">ЗАПУСТИТЬ</button></div>
+      <form id="form" hidden>
+        <svg class="clip" viewBox="0 0 24 24"><path d="M16.5 6v11.5a4 4 0 0 1-8 0V5a2.5 2.5 0 0 1 5 0v10.5a1 1 0 0 1-2 0V6H10v9.5a2.5 2.5 0 0 0 5 0V5a4 4 0 0 0-8 0v12.5a5.5 5.5 0 0 0 11 0V6h-1.5z"/></svg>
+        <input id="inp" disabled placeholder="Выберите вариант кнопкой…" autocomplete="off">
+        <button id="send" aria-label="Отправить"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+      </form>
+    </div>
+
+    <div class="side">
+      <div class="card"><h2>Что сейчас происходит</h2><div id="explain"></div></div>
+      <div class="card"><h2>Что видит менеджер в CRM</h2><div id="lead"><div class="empty">Здесь появится сделка в CRM, когда клиент отправит заявку боту.</div></div></div>
+      <div class="card"><h2>Путь клиента</h2><div class="steps" id="steps">
+        <span data-s="menu">Меню</span><span data-s="pick">Подбор</span><span data-s="programs">Программы</span><span data-s="details">Данные</span><span data-s="sent">Заявка</span>
+      </div></div>
+    </div>
+  </div>
+</div></section>
+
+<section class="pg alt"><div class="wrap">
+  <h2>Что умеет бот</h2>
+  <div class="cols3">
+    <div class="pc"><b>Подбор программы</b><p>Несколько простых вопросов вместо поиска по каталогу из 100+ направлений.</p></div>
+    <div class="pc"><b>Сбор заявки</b><p>Компания, контакт, программы, количество человек, город и формат. На любом шаге можно вернуться назад.</p></div>
+    <div class="pc"><b>Ответы на частые вопросы</b><p>Срочное зачисление, документы, доступ к платформе, проверка в реестре. Тексты утверждаете вы, бот ничего не придумывает.</p></div>
+    <div class="pc"><b>Свой вопрос менеджеру</b><p>Если нужного варианта нет, клиент пишет своими словами, и вопрос уходит в заявку.</p></div>
+    <div class="pc"><b>Работа вне рабочего времени</b><p>Бот принимает заявку и честно сообщает, когда ответит менеджер.</p></div>
+    <div class="pc"><b>Напоминания о повторном обучении</b><p>Бот сам пишет клиенту, когда подходит срок обновить обучение сотрудников.</p></div>
+  </div>
+</div></section>
+
+<section class="pg"><div class="wrap">
+  <h2>Заявки в вашей CRM</h2>
+  <p class="intro">Менеджер не зависит от мессенджера: работает в привычной CRM, а уведомления приходят средствами самой системы.</p>
+  <ul class="list">
+    <li>Для каждой заявки создаётся сделка с заполненными полями и этапом «Новая заявка».</li>
+    <li>Бот подключается к популярным CRM (Битрикс24, amoCRM и другим) через их открытый API. Точную систему и поля уточним на старте.</li>
+    <li>Если CRM временно недоступна, бот сохранит заявку и отправит её позже, ничего не потеряется.</li>
+    <li>Повторных клиентов можно находить по телефону или ИНН, чтобы не создавать дубли.</li>
+  </ul>
+</div></section>
+
+<section class="pg alt"><div class="wrap">
+  <h2>Пакеты и стоимость</h2>
+  <div class="tw"><table class="price">
+    <thead><tr><th></th><th>Старт</th><th>Стандарт</th><th>Расширенный</th></tr></thead>
+    <tbody>
+      <tr><td>Каналы</td><td>Telegram</td><td>Telegram + MAX</td><td>Telegram + MAX</td></tr>
+      <tr><td>Подбор программы</td><td>✓</td><td>✓</td><td>✓</td></tr>
+      <tr><td>Сбор заявки со всеми данными</td><td>✓</td><td>✓</td><td>✓</td></tr>
+      <tr><td>Ответы на частые вопросы</td><td>✓</td><td>✓</td><td>✓</td></tr>
+      <tr><td>Куда уходит заявка</td><td>Почта и Google Таблица</td><td>CRM</td><td>CRM</td></tr>
+      <tr><td>Напоминания о повторном обучении</td><td>—</td><td>✓</td><td>✓</td></tr>
+      <tr><td>Панель администратора (каталог и ответы)</td><td>—</td><td>✓</td><td>✓</td></tr>
+      <tr><td>ИИ-консультант по утверждённой базе знаний</td><td>—</td><td>—</td><td>✓</td></tr>
+      <tr><td>Аналитика обращений</td><td>—</td><td>—</td><td>✓</td></tr>
+      <tr><td>Срок</td><td>7–10 дней</td><td>2–3 недели</td><td>4–5 недель</td></tr>
+      <tr class="sum"><td>Стоимость</td><td>40 000 ₽</td><td>70 000 ₽</td><td>120 000 ₽</td></tr>
+    </tbody>
+  </table></div>
+  <p class="swipe">Таблицу можно листать вбок</p>
+  <p class="note">Интеграция с CRM для пакета «Старт»: +15 000 ₽. Поддержка после запуска: 4 000 ₽ в месяц (сервер, мониторинг, мелкие правки), первый месяц включён. ИИ-консультант отвечает только по утверждённым вами материалам, а вопросы о нормативных требованиях передаёт специалисту. Цены ориентировочные и уточняются после обсуждения состава.</p>
+</div></section>
+
+<section class="pg"><div class="wrap">
+  <h2>Сроки и этапы</h2>
+  <ol class="list">
+    <li><b>Старт и материалы:</b> вы письменно отвечаете на вопросы из раздела ниже и присылаете каталог программ и данные по CRM. Недостающие детали уточняем в переписке.</li>
+    <li><b>Сценарий диалога:</b> схема разговора бота, согласование с вами.</li>
+    <li><b>Разработка и демо:</b> вы видите работающего бота и вносите правки.</li>
+    <li><b>Тестирование</b> на ваших сотрудниках.</li>
+    <li><b>Запуск</b> и 2 недели сопровождения.</li>
+  </ol>
+</div></section>
+
+<section class="pg alt"><div class="wrap">
+  <h2>Что нужно от вас и как измерим результат</h2>
+  <div class="cols2">
+    <div class="pc"><b>От вас</b><ul class="list"><li>Список программ с группировкой по отраслям и должностям.</li><li>Ответы на частые вопросы.</li><li>Ответственный менеджер и доступ к CRM.</li><li>Доступ к сообществу в MAX и каналам в Telegram.</li></ul></div>
+    <div class="pc"><b>Результат</b><p>Предлагаю пилот на 30 дней и разбор цифр по итогам: число заявок через бота, доля обращений вне рабочего времени, доля заявок с полными данными и время до первого ответа клиенту.</p></div>
+  </div>
+</div></section>
+
+<section class="pg"><div class="wrap">
+  <h2>Условия</h2>
+  <ul class="list">
+    <li>Оплата: 50% предоплата, 50% после запуска.</li>
+    <li>Бот и исходный код передаются вам, права на сценарии остаются у заказчика.</li>
+    <li>Данные заявок хранятся на сервере в России, собираются только необходимые для заявки.</li>
+  </ul>
+</div></section>
+
+<section class="pg alt"><div class="wrap">
+  <h2>Вопросы для старта</h2>
+  <p class="intro">Чтобы подготовить сценарий и точную смету, пришлите ответы письменно, в любом удобном виде: письмо, сообщение или файл. Если на какой-то вопрос пока нет ответа, так и напишите, мы разберёмся вместе.</p>
+  <ol class="list">
+    <li><b>Каталог.</b> Полный список программ: название, направление, формат (дистанционно или очно), длительность. Таблицей или ссылкой на страницу сайта.</li>
+    <li><b>Подбор.</b> Какие программы нужны какой отрасли и должности? Есть ли у вас готовая логика подбора или её нужно составить вместе?</li>
+    <li><b>Частые вопросы.</b> Какие вопросы клиенты задают чаще всего и какие утверждённые ответы на них (срочное зачисление, документы, доступ к платформе, проверка в реестре)?</li>
+    <li><b>CRM.</b> Какая система используется, кто её администратор, можно ли выдать доступ для интеграции (ключ API или вебхук)?</li>
+    <li><b>Поля и воронка.</b> Какие данные должны попадать в сделку, на какой этап воронки, на кого назначать новые заявки?</li>
+    <li><b>Текущие заявки.</b> Откуда они приходят сейчас (форма, телефон, WhatsApp, Telegram), сколько обращений в месяц и какая доля приходится на нерабочее время? Это нужно, чтобы оценить эффект.</li>
+    <li><b>Каналы.</b> Есть ли у вас бот или аккаунт в Telegram, сообщество в MAX и кто ими управляет?</li>
+    <li><b>Повторное обучение.</b> Хранится ли у вас база прошлых обучений (кто, что и когда проходил) и в каком виде: CRM, Excel, 1С?</li>
+    <li><b>Сопровождение.</b> Кто у вас будет обновлять каталог и ответы? Нужна ли для этого панель администратора?</li>
+    <li><b>Вне рабочего времени.</b> Что бот должен отвечать клиенту, когда менеджеры не на связи, и в какой тональности общаться?</li>
+    <li><b>Персональные данные.</b> Есть ли у вас политика обработки персональных данных и текст согласия, который бот должен показывать?</li>
+    <li><b>Пакет и сроки.</b> Какой пакет вам ближе и к какой дате желательно запустить бота?</li>
+  </ol>
+</div></section>
+
+<section class="pg"><div class="wrap">
+  <div class="cta">
+    <h2>Следующий шаг</h2>
+    <p>Пришлите письменно ответы на вопросы выше. После этого в течение 2 рабочих дней я подготовлю схему диалога бота и точную смету.</p>
+    <p><b>Андрей</b> · +7 (981) 819-34-75 · Telegram: @scholar_re</p>
+  </div>
+</div></section>
+<footer>Предложение подготовлено на основе открытой информации с сайта atgprof.com</footer>
+
+<script>
+(function(){
+  var chat=document.getElementById('chat'),form=document.getElementById('form'),inp=document.getElementById('inp');
+  var startbar=document.getElementById('startbar'),statusEl=document.getElementById('status');
+  var run=0,textResolver=null,channel='tg',timeMode='day';
+  var PLACEHOLDER='Выберите вариант кнопкой…';
+  var BACKL='← Назад',BACK={};
+
+  function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
+  function stale(my){if(my!==run)throw new Error('stale');}
+  function scroll(){chat.scrollTop=chat.scrollHeight;}
+  function hhmm(){return new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});}
+  function setStatus(typing){
+    statusEl.textContent=typing?'печатает':(channel==='tg'?'бот':'бот');
+    statusEl.className=typing?'typing':'';
+  }
+  function bubble(who,text){
+    var d=document.createElement('div');d.className='msg '+who;
+    var t=document.createElement('span');t.textContent=text;d.appendChild(t);
+    var tm=document.createElement('span');tm.className='time';tm.textContent=hhmm()+(who==='user'?' ✓✓':'');d.appendChild(tm);
+    chat.appendChild(d);scroll();return d;
+  }
+  async function say(my,text){
+    setStatus(true);
+    await sleep(Math.min(1100,350+text.length*5));
+    stale(my);
+    setStatus(false);
+    return bubble('bot',text);
+  }
+  function choose(my,options){
+    return new Promise(function(res){
+      var kb=document.createElement('div');kb.className='kb';
+      options.forEach(function(o){
+        var b=document.createElement('button');b.textContent=o;
+        if(o===BACKL||o.length>16)b.className='full';
+        b.onclick=function(){if(my!==run)return;kb.remove();bubble('user',o);res(o);};
+        kb.appendChild(b);
+      });
+      chat.appendChild(kb);scroll();
+    });
+  }
+  function ask(my,ph){
+    return new Promise(function(res){
+      inp.disabled=false;inp.placeholder=ph;inp.focus();
+      textResolver=function(v){if(my!==run)return;res(v);};
+    });
+  }
+  function askWithBack(my,ph){
+    return new Promise(function(res){
+      var kb=document.createElement('div');kb.className='kb';
+      var b=document.createElement('button');b.textContent=BACKL;b.className='full';
+      b.onclick=function(){
+        if(my!==run)return;
+        kb.remove();textResolver=null;inp.value='';inp.disabled=true;inp.placeholder=PLACEHOLDER;
+        bubble('user',BACKL);res(BACK);
+      };
+      kb.appendChild(b);chat.appendChild(kb);scroll();
+      inp.disabled=false;inp.placeholder=ph;inp.focus();
+      textResolver=function(v){if(my!==run)return;kb.remove();res(v);};
+    });
+  }
+  form.addEventListener('submit',function(e){
+    e.preventDefault();
+    var v=inp.value.trim();
+    if(!v||!textResolver)return;
+    bubble('user',v);inp.value='';inp.disabled=true;inp.placeholder=PLACEHOLDER;
+    var r=textResolver;textResolver=null;r(v);
+  });
+  async function q(my,text,options){await say(my,text);return choose(my,options);}
+  async function qt(my,text,ph){await say(my,text);return ask(my,ph);}
+
+  function explain(stepKey,title,text){
+    var e=document.getElementById('explain');e.innerHTML='';
+    var b=document.createElement('b');b.textContent=title;
+    var p=document.createElement('div');p.textContent=text;
+    e.appendChild(b);e.appendChild(p);
+    document.querySelectorAll('#steps span').forEach(function(s){s.classList.toggle('on',s.getAttribute('data-s')===stepKey);});
+  }
+  function showLead(type,rows){
+    var box=document.getElementById('lead');box.innerHTML='';
+    var d=document.createElement('div');d.className='lead';
+    var t=document.createElement('div');t.className='t';t.textContent='Новая сделка в CRM · '+type;
+    rows=[['Этап','Новая заявка'],['Источник','Бот']].concat(rows);
+    var dl=document.createElement('dl');
+    rows.forEach(function(r){var dt=document.createElement('dt');dt.textContent=r[0];var dd=document.createElement('dd');dd.textContent=r[1];dl.appendChild(dt);dl.appendChild(dd);});
+    d.appendChild(t);d.appendChild(dl);
+    var tag=document.createElement('span');
+    if(timeMode==='night'){tag.className='tag night';tag.textContent='Пришла вне рабочего времени: менеджер увидит с утра';}
+    else{tag.className='tag';tag.textContent='Менеджер получил уведомление от CRM';}
+    d.appendChild(tag);
+    box.appendChild(d);
+  }
+  function now(){var d=new Date();return d.toLocaleDateString('ru-RU')+' '+d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});}
+  function noteOf(a){return (a.note&&a.note!=='Нет, всё понятно')?a.note:'';}
+  var OTHER={label:'Другое',say:'Напишите своими словами, и я передам это менеджеру.',ph:'Опишите своими словами',fmt:function(t){return 'Другое: '+t;}};
+  function chName(){return channel==='tg'?'Telegram':'MAX';}
+  async function farewell(my){
+    if(timeMode==='night'){
+      await say(my,'Заявка принята. Сейчас менеджеры не на связи: они работают с 09:00 до 18:00. Ответят в ближайший рабочий день, а ваши данные уже у них.');
+    }else{
+      await say(my,'Заявка принята и передана менеджеру. Он свяжется с вами в рабочее время (с 09:00 до 18:00).');
+    }
+  }
+
+  var programs={
+    'Охрана труда':['Обучение по охране труда для работников','Обучение руководителей и специалистов по охране труда'],
+    'Пожарная безопасность':['Пожарно-технический минимум для работников','Пожарно-технический минимум для руководителей'],
+    'Электробезопасность':['Электробезопасность: обучение и проверка знаний'],
+    'Работы на высоте':['Безопасные методы и приёмы работ на высоте'],
+    'Сварка и НАКС':['Подготовка и аттестация сварщиков (НАКС)']
+  };
+
+  var exMap={
+    pick:['Подбор: бот задаёт 3 простых вопроса','Сфера, должности и направление. Клиенту не нужно знать названия программ, а менеджеру не нужно выяснять это по телефону. Это обычное дерево вопросов, ИИ здесь не нужен.'],
+    programs:['Программы: бот сверяется с каталогом','Ответы сопоставляются с каталогом. В рабочей версии каталог хранится в таблице или в панели администратора, и сотрудник «АльфаТренинг» правит его сам, без разработчика.'],
+    details:['Данные: каждый ответ сохраняется отдельным полем','Количество, формат, город, компания и контакт попадают в заявку структурированно. Менеджеру остаётся позвонить и назвать цену, а не переспрашивать. На любом шаге клиент может вернуться назад.']
+  };
+  var steps=[
+    {k:'sphere',ex:'pick',type:'c',text:'В какой сфере работает ваша компания?',opts:['Строительство','Производство','Склад и логистика','Торговля и офис','Другое'],follow:OTHER},
+    {k:'who',ex:'pick',type:'c',text:'Кого нужно обучить?',opts:['Рабочих','Руководителей и ИТР','Специалистов по охране труда','Разные категории','Другое'],follow:OTHER},
+    {k:'topic',ex:'pick',type:'c',text:'Какое направление интересует?',opts:['Охрана труда','Пожарная безопасность','Электробезопасность','Работы на высоте','Сварка и НАКС','Не знаю, подскажите','Другое'],follow:OTHER},
+    {k:'ok',ex:'programs',type:'c',text:function(a){
+      if(a.topic==='Не знаю, подскажите'){a.programs='подберёт менеджер (клиент не определился)';return 'Здесь лучше, чтобы программу подобрал специалист: она зависит от отрасли и должностей. Я передам менеджеру всё, что вы уже указали, и он предложит подходящие варианты.\n\nПродолжаем?';}
+      if(/^Другое/.test(a.topic)){a.programs='подберёт менеджер по описанию клиента';return 'Готовых программ под такой запрос в каталоге не нашёл. Менеджер подберёт вручную и учтёт ваше описание.\n\nПродолжаем?';}
+      a.programs=programs[a.topic].join('; ');
+      return 'Вам могут подойти такие программы:\n'+programs[a.topic].map(function(p){return '• '+p;}).join('\n')+'\n\nПодходит?';
+    },opts:['Да, продолжаем']},
+    {k:'count',ex:'details',type:'c',text:'Сколько человек нужно обучить?',opts:['1–5','6–20','21–50','Больше 50']},
+    {k:'format',ex:'details',type:'c',text:'Какой формат удобнее?',opts:['Дистанционно','Очно, с выездом к нам','Пока не знаю']},
+    {k:'city',ex:'details',type:'t',text:'В каком городе находится ваша компания?',ph:'Например, Санкт-Петербург'},
+    {k:'company',ex:'details',type:'t',text:'Как называется компания?',ph:'Название организации'},
+    {k:'name',ex:'details',type:'t',text:'Как к вам обращаться?',ph:'Имя'},
+    {k:'contact',ex:'details',type:'t',text:'Оставьте телефон или ник в мессенджере для связи.',ph:'+7… или @ник'},
+    {k:'note',ex:'details',type:'c',text:'Хотите добавить вопрос или комментарий для менеджера?',opts:['Нет, всё понятно','Написать вопрос'],follow:{label:'Написать вопрос',say:'Напишите вопрос, и я передам его менеджеру вместе с заявкой.',ph:'Ваш вопрос',fmt:function(t){return t;}}},
+    {k:'confirm',ex:'details',type:'c',text:function(a){
+      return 'Проверьте заявку:\nКомпания: '+a.company+', '+a.city+'\nКонтакт: '+a.name+', '+a.contact+'\nКто: '+a.who+' ('+a.sphere+')\nПрограммы: '+a.programs+'\nЧеловек: '+a.count+'\nФормат: '+a.format+(noteOf(a)?'\nВопрос менеджеру: '+noteOf(a):'');
+    },opts:['Отправить заявку']}
+  ];
+  async function pick(my){
+    var a={},i=0;
+    await say(my,'Отвечу на несколько вопросов, это займёт около минуты. На любом шаге можно вернуться назад.');
+    while(i<steps.length){
+      var s=steps[i];
+      explain(s.ex,exMap[s.ex][0],exMap[s.ex][1]);
+      await say(my,typeof s.text==='function'?s.text(a):s.text);
+      var ans;
+      if(s.type==='c'){
+        ans=await choose(my,i>0?s.opts.concat([BACKL]):s.opts);
+        if(ans===BACKL)ans=BACK;
+      }else{
+        ans=await askWithBack(my,s.ph);
+      }
+      if(ans===BACK){i=Math.max(0,i-1);continue;}
+      if(s.follow&&ans===s.follow.label){
+        await say(my,s.follow.say);
+        var t=await askWithBack(my,s.follow.ph);
+        if(t===BACK)continue;
+        a[s.k]=s.follow.fmt(t);i++;continue;
+      }
+      a[s.k]=ans;i++;
+    }
+    explain('sent','Заявка ушла менеджеру','Бот создаёт в CRM новую сделку со всеми полями, а менеджер получает уведомление средствами самой CRM (приложение, почта). Если CRM временно недоступна, бот сохранит заявку у себя и отправит позже. Клиент сразу получает подтверждение, даже ночью.');
+    showLead('подбор обучения',[['Время',now()],['Канал',chName()],['Компания',a.company],['Город',a.city],['Контакт',a.name+', '+a.contact],['Сфера',a.sphere],['Обучить',a.who],['Программы',a.programs],['Человек',a.count],['Формат',a.format]].concat(noteOf(a)?[['Вопрос менеджеру',noteOf(a)]]:[]));
+    await farewell(my);
+  }
+
+  var faqList=[
+    ['Можно ли оформить срочно?','Здесь будет утверждённый ответ о срочном зачислении.'],
+    ['Как получить документы?','Здесь будет утверждённый ответ о сроках и способах доставки документов.'],
+    ['Как войти в онлайн-платформу?','Здесь будет утверждённая инструкция по доступу к платформе.'],
+    ['Как проверить удостоверение в реестре?','Здесь будет утверждённая инструкция по проверке в реестре.']
+  ];
+  async function faq(my){
+    explain('menu','Частые вопросы: готовые ответы','Ответы выдаются из списка, который утверждает «АльфаТренинг». Бот ничего не придумывает: это важно, потому что ошибка в вопросах охраны труда может стоить клиенту штрафа.');
+    while(true){
+      var opts=faqList.map(function(f){return f[0];}).concat(['В меню']);
+      var c=await q(my,'Выберите вопрос:',opts);
+      if(c==='В меню')return;
+      var f=faqList.filter(function(x){return x[0]===c;})[0];
+      await say(my,f[1]+'\n\n(Пример: в рабочей версии здесь текст «АльфаТренинг».)');
+      var n=await choose(my,['Другой вопрос','Позвать менеджера','В меню']);
+      if(n==='В меню')return;
+      if(n==='Позвать менеджера'){await callManager(my);return;}
+    }
+  }
+  async function callManager(my){
+    explain('details','Позвать менеджера: клиент оставляет контакт','Если вопрос нестандартный, бот не пытается ответить сам, а собирает контакт и передаёт человеку.');
+    var name=await qt(my,'Как к вам обращаться?','Имя');
+    var contact=await qt(my,'Оставьте телефон или ник в мессенджере.','+7… или @ник');
+    var topic=await q(my,'О чём хотите поговорить?',['Стоимость обучения','Вопрос по документам','Другое']);
+    if(topic==='Другое'){topic=await qt(my,'Напишите ваш вопрос, я передам его менеджеру.','Ваш вопрос');}
+    explain('sent','Заявка ушла менеджеру','Менеджер видит тему обращения и контакт. Ему не нужно искать переписку.');
+    showLead('просьба связаться',[['Время',now()],['Канал',chName()],['Контакт',name+', '+contact],['Тема',topic]]);
+    await farewell(my);
+  }
+  async function reminder(my){
+    explain('details','Напоминание: бот пишет клиенту первым','Для этого в базе хранится, кто, что и когда проходил. За 30 дней до окончания срока бот напоминает. Это повторные продажи без затрат на рекламу. Входит в пакеты «Стандарт» и «Расширенный».');
+    await say(my,'Пример: так бот напишет компании сам, без запроса.');
+    await say(my,'🔔 Здравствуйте! Срок действия обучения «Безопасные методы и приёмы работ на высоте» для 3 сотрудников компании «ООО Пример» истекает через 30 дней. Организовать повторное обучение?');
+    var c=await choose(my,['Да, оформить заявку','Напомнить позже']);
+    if(c==='Напомнить позже'){await say(my,'Хорошо, напомню через неделю.');return;}
+    showLead('повторное обучение',[['Время',now()],['Канал',chName()],['Компания','ООО Пример (из базы клиентов)'],['Программа','Безопасные методы и приёмы работ на высоте'],['Человек','3'],['Причина','Истекает срок обучения']]);
+    explain('sent','Заявка ушла менеджеру','Менеджер видит, что это повторный клиент, и сразу знает, что ему нужно.');
+    await farewell(my);
+  }
+
+  async function menu(my){
+    explain('menu','Меню: клиенту не нужно ничего печатать','Бот встречает клиента и сразу предлагает четыре действия кнопками. Один и тот же сценарий работает и в Telegram, и в MAX.');
+    await say(my,'Здравствуйте! Я помощник учебного центра «АльфаТренинг». Помогу подобрать обучение и оставить заявку. Что вас интересует?');
+    while(true){
+      var c=await choose(my,['Подобрать обучение','Частые вопросы','Позвать менеджера','Пример напоминания о повторном обучении']);
+      if(c==='Подобрать обучение')await pick(my);
+      else if(c==='Частые вопросы')await faq(my);
+      else if(c==='Позвать менеджера')await callManager(my);
+      else await reminder(my);
+      explain('menu','Меню: клиент возвращается к началу','Бот снова предлагает действия. Клиент может пройти другой сценарий.');
+      await say(my,'Чем ещё могу помочь?');
+    }
+  }
+
+  function start(){
+    var my=++run;
+    chat.innerHTML='';textResolver=null;inp.value='';inp.disabled=true;inp.placeholder=PLACEHOLDER;
+    setStatus(false);
+    form.hidden=true;startbar.hidden=false;
+    document.getElementById('lead').innerHTML='<div class="empty">Здесь появится сделка в CRM, когда клиент отправит заявку боту.</div>';
+    explain('menu','Клиент открывает бота','В Telegram новый пользователь видит кнопку «Запустить». Нажмите её, чтобы начать диалог.');
+    document.getElementById('startBtn').onclick=async function(){
+      if(my!==run)return;
+      startbar.hidden=true;form.hidden=false;
+      var dc=document.createElement('div');dc.className='date';dc.textContent='Сегодня';chat.appendChild(dc);
+      bubble('user','/start');
+      try{await menu(my);}catch(e){if(e.message!=='stale')console.error(e);}
+    };
+  }
+
+  document.getElementById('chSeg').addEventListener('click',function(e){
+    var b=e.target.closest('button');if(!b)return;
+    channel=b.getAttribute('data-ch');
+    document.getElementById('phone').setAttribute('data-ch',channel);
+    document.getElementById('startBtn').textContent=channel==='tg'?'ЗАПУСТИТЬ':'НАЧАТЬ';
+    this.querySelectorAll('button').forEach(function(x){x.classList.toggle('on',x===b);});
+  });
+  document.getElementById('tmSeg').addEventListener('click',function(e){
+    var b=e.target.closest('button');if(!b)return;
+    timeMode=b.getAttribute('data-t');
+    this.querySelectorAll('button').forEach(function(x){x.classList.toggle('on',x===b);});
+  });
+  document.getElementById('reset').addEventListener('click',start);
+  start();
+})();
+</script>
+<script>document.getElementById('toDemo').addEventListener('click',function(e){e.preventDefault();var d=document.getElementById('demo');if(d&&d.scrollIntoView)d.scrollIntoView({behavior:'smooth'});});</script>
+</body>
+</html>
